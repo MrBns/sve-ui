@@ -1,0 +1,10 @@
+[install]
+# Use the local cache for faster installs
+cache = true
+
+[install.lockfile]
+# Print a yarn lockfile as well
+print = "yarn"
+
+[run]
+bun = true
