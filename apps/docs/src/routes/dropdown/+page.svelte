@@ -1,7 +1,23 @@
 <script lang="ts">
-  import { Dropdown } from '@sve-ui/dropdown';
+  import Dropdown, { DropdownItem } from '@sve-ui/dropdown';
+  import type { DropdownItemData } from '@sve-ui/dropdown';
 
   let lastAction = $state('');
+
+  const actionItems: DropdownItemData[] = [
+    { label: '✏️ Edit', onSelect: () => lastAction = 'Edit' },
+    { label: '📋 Duplicate', onSelect: () => lastAction = 'Duplicate' },
+    { label: '📦 Archive', onSelect: () => lastAction = 'Archive' },
+    { separator: true, label: '' },
+    { label: '🗑️ Delete', onSelect: () => lastAction = 'Delete' }
+  ];
+
+  const statusItems: DropdownItemData[] = [
+    { label: 'Active', value: 'active', onSelect: () => lastAction = 'Active' },
+    { label: 'Paused', value: 'paused', onSelect: () => lastAction = 'Paused' },
+    { label: 'Archived', value: 'archived', onSelect: () => lastAction = 'Archived' },
+    { label: 'Deleted (disabled)', value: 'deleted', disabled: true }
+  ];
 </script>
 
 <svelte:head>
@@ -22,85 +38,75 @@
   {/if}
 
   <section class="mb-12 flex flex-wrap gap-6 items-start">
-    <!-- Basic Dropdown -->
-    <Dropdown.Root>
-      <Dropdown.Trigger class="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium transition-colors flex items-center gap-2">
-        Actions
-        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path d="M19 9l-7 7-7-7"/>
-        </svg>
-      </Dropdown.Trigger>
-      <Dropdown.Content class="absolute z-50 mt-2 w-48 bg-slate-800 border border-slate-600 rounded-xl shadow-xl py-1 overflow-hidden">
-        <Dropdown.Item
-          onSelect={() => lastAction = 'Edit'}
-          class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 hover:text-white cursor-pointer transition-colors data-[active]:bg-slate-700"
-        >
-          ✏️ Edit
-        </Dropdown.Item>
-        <Dropdown.Item
-          onSelect={() => lastAction = 'Duplicate'}
-          class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 hover:text-white cursor-pointer transition-colors data-[active]:bg-slate-700"
-        >
-          📋 Duplicate
-        </Dropdown.Item>
-        <Dropdown.Item
-          onSelect={() => lastAction = 'Archive'}
-          class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 hover:text-white cursor-pointer transition-colors data-[active]:bg-slate-700"
-        >
-          📦 Archive
-        </Dropdown.Item>
-        <div class="my-1 border-t border-slate-700"></div>
-        <Dropdown.Item
-          onSelect={() => lastAction = 'Delete'}
-          class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 cursor-pointer transition-colors"
-        >
-          🗑️ Delete
-        </Dropdown.Item>
-      </Dropdown.Content>
-    </Dropdown.Root>
+    <!-- Data-driven mode -->
+    <div>
+      <p class="text-xs text-slate-400 mb-2 font-mono">Data-driven with <code>items</code> array</p>
+      <Dropdown
+        items={actionItems}
+        contentClass="absolute z-50 mt-2 w-48 bg-slate-800 border border-slate-600 rounded-xl shadow-xl py-1"
+        itemClass="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 hover:text-white cursor-pointer transition-colors data-[active]:bg-slate-700"
+      >
+        {#snippet trigger()}
+          <span class="flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium transition-colors cursor-pointer">
+            Actions
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </span>
+        {/snippet}
+      </Dropdown>
+    </div>
 
-    <!-- Status Dropdown -->
-    <Dropdown.Root>
-      <Dropdown.Trigger class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition-colors flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-emerald-300"></span>
-        Status
-        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path d="M19 9l-7 7-7-7"/>
-        </svg>
-      </Dropdown.Trigger>
-      <Dropdown.Content class="absolute z-50 mt-2 w-40 bg-slate-800 border border-slate-600 rounded-xl shadow-xl py-1">
-        {#each [
-          { label: 'Active', color: 'bg-emerald-400' },
-          { label: 'Paused', color: 'bg-yellow-400' },
-          { label: 'Archived', color: 'bg-slate-400' },
-          { label: 'Deleted', color: 'bg-red-400' }
-        ] as status}
-          <Dropdown.Item
-            onSelect={() => lastAction = status.label}
-            class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 cursor-pointer transition-colors"
+    <!-- Children mode (DropdownItem) -->
+    <div>
+      <p class="text-xs text-slate-400 mb-2 font-mono"><code>&lt;DropdownItem&gt;</code> children</p>
+      <Dropdown contentClass="absolute z-50 mt-2 w-40 bg-slate-800 border border-slate-600 rounded-xl shadow-xl py-1">
+        {#snippet trigger()}
+          <span class="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition-colors cursor-pointer">
+            <span class="w-2 h-2 rounded-full bg-emerald-300"></span>
+            Status
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </span>
+        {/snippet}
+        {#each statusItems as s}
+          <DropdownItem
+            disabled={s.disabled}
+            onSelect={s.onSelect}
+            class="px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 cursor-pointer transition-colors aria-disabled:opacity-40 aria-disabled:cursor-not-allowed"
           >
-            <span class="w-2 h-2 rounded-full {status.color}"></span>
-            {status.label}
-          </Dropdown.Item>
+            {s.label}
+          </DropdownItem>
         {/each}
-      </Dropdown.Content>
-    </Dropdown.Root>
+      </Dropdown>
+    </div>
   </section>
 
   <!-- Code -->
   <section>
     <h2 class="text-lg font-semibold text-slate-300 mb-3">Usage</h2>
     <pre class="bg-slate-900 border border-slate-700 rounded-xl p-5 text-sm text-green-300 font-mono overflow-x-auto">{`<script lang="ts">
-  import { Dropdown } from '@sve-ui/dropdown';
+  import Dropdown, { DropdownItem } from '@sve-ui/dropdown';
 <\/script>
 
-<Dropdown.Root>
-  <Dropdown.Trigger class="...">Options</Dropdown.Trigger>
-  <Dropdown.Content class="...">
-    <Dropdown.Item onSelect={() => console.log('Edit')}>
-      Edit
-    </Dropdown.Item>
-  </Dropdown.Content>
-</Dropdown.Root>`}</pre>
+<!-- 1️⃣ Data-driven — just pass items -->
+<Dropdown items={[
+  { label: 'Edit', onSelect: () => {} },
+  { label: 'Delete', onSelect: () => {} }
+]} contentClass="...">
+  {#snippet trigger()}
+    <button>Actions ▾</button>
+  {/snippet}
+</Dropdown>
+
+<!-- 2️⃣ Children — render DropdownItem manually -->
+<Dropdown contentClass="...">
+  {#snippet trigger()}
+    <button>Options ▾</button>
+  {/snippet}
+  <DropdownItem onSelect={edit}>✏️ Edit</DropdownItem>
+  <DropdownItem onSelect={del}>🗑️ Delete</DropdownItem>
+</Dropdown>`}</pre>
   </section>
 </div>

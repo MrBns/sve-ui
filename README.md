@@ -70,83 +70,120 @@ bun add @sve-ui/accordion @sve-ui/modal @sve-ui/dropdown @sve-ui/popover @sve-ui
 
 ### Accordion
 
-Accessible collapsible sections supporting `single` (one open at a time) and `multiple` modes.
+Two ways to use it — pick the simplest one for your needs.
 
 ```svelte
 <script lang="ts">
-  import { Accordion } from '@sve-ui/accordion';
+  import Accordion, { AccordionItem } from '@sve-ui/accordion';
 </script>
 
-<Accordion.Root type="single" defaultValue="item-1">
-  <Accordion.Item value="item-1">
-    <Accordion.Trigger class="w-full flex justify-between px-4 py-3 font-medium">
-      What is sve-ui?
-      <span aria-hidden="true">↓</span>
-    </Accordion.Trigger>
-    <Accordion.Content class="px-4 pb-3 text-gray-600">
-      A headless Svelte 5 component library.
-    </Accordion.Content>
-  </Accordion.Item>
+<!-- 1️⃣ Data-driven (simplest) — just pass an items array -->
+<Accordion
+  type="single"
+  items={[
+    { value: 'q1', title: 'What is sve-ui?', content: 'A headless Svelte 5 component library.' },
+    { value: 'q2', title: 'How does it work?', content: 'You provide styles, we handle logic.' }
+  ]}
+  triggerClass="w-full flex justify-between px-4 py-3 font-medium"
+  contentClass="px-4 pb-3 text-gray-600"
+/>
 
-  <Accordion.Item value="item-2">
-    <Accordion.Trigger class="w-full flex justify-between px-4 py-3 font-medium">
-      How does it work?
-    </Accordion.Trigger>
-    <Accordion.Content class="px-4 pb-3 text-gray-600">
-      Components handle logic and accessibility; you provide styles.
-    </Accordion.Content>
-  </Accordion.Item>
-</Accordion.Root>
+<!-- 2️⃣ Custom rendering with snippets (no sub-components needed) -->
+<Accordion type="single" {items}>
+  {#snippet trigger(item, isOpen)}
+    <span class="flex justify-between w-full">
+      {item.title}
+      <span class:rotate-180={isOpen}>↓</span>
+    </span>
+  {/snippet}
+  {#snippet content(item)}
+    <p class="px-4 pb-3 text-gray-600">{item.content}</p>
+  {/snippet}
+</Accordion>
+
+<!-- 3️⃣ AccordionItem children — for rich/different HTML per item -->
+<Accordion type="single">
+  <AccordionItem value="q1" title="What is sve-ui?" triggerClass="..." contentClass="...">
+    <p>Any HTML content here — forms, images, grids, etc.</p>
+  </AccordionItem>
+  <AccordionItem value="q2" contentClass="...">
+    {#snippet trigger(isOpen)}
+      {isOpen ? '📂' : '📁'} Custom trigger with icons
+    {/snippet}
+    <form>Complex form here</form>
+  </AccordionItem>
+</Accordion>
 ```
 
-**Props — `Accordion.Root`**
+**Props — `Accordion`**
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `type` | `'single' \| 'multiple'` | `'single'` | Whether one or many items can be open |
+| `type` | `'single' \| 'multiple'` | `'single'` | One or many items open at a time |
 | `defaultValue` | `string \| string[]` | — | Initially open item(s) |
+| `items` | `AccordionItemData[]` | — | Data-driven mode; omit to use children |
+| `trigger` | `Snippet<[item, isOpen]>` | — | Custom trigger rendering |
+| `content` | `Snippet<[item]>` | — | Custom content rendering |
 
-**Data attributes** — `[data-state="open|closed"]`, `[data-disabled]`
+**Props — `AccordionItem`**
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `value` | `string` | Unique key |
+| `title` | `string` | Trigger text (ignored if `trigger` snippet provided) |
+| `trigger` | `Snippet<[isOpen]>` | Custom trigger rendering |
+| `children` | `Snippet` | Panel content |
 
 ---
 
 ### Modal
 
-Accessible dialog with focus trapping, `role="dialog"`, `aria-modal`, and Escape-to-close.
+Single component. Use `bind:open` (external trigger) or the inline `trigger` snippet.
 
 ```svelte
 <script lang="ts">
-  import { Modal } from '@sve-ui/modal';
+  import Modal from '@sve-ui/modal';
+  let open = $state(false);
 </script>
 
-<Modal.Root>
-  <Modal.Trigger class="px-4 py-2 bg-blue-600 text-white rounded-lg">
-    Open Dialog
-  </Modal.Trigger>
+<!-- 1️⃣ bind:open — trigger lives outside the component -->
+<button onclick={() => open = true}>Open Dialog</button>
 
-  <Modal.Content
-    overlayClass="fixed inset-0 bg-black/50 flex items-center justify-center"
-    class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
-  >
-    <Modal.Title class="text-xl font-bold mb-2">Confirm Action</Modal.Title>
-    <Modal.Description class="text-gray-500 mb-6">
-      Are you sure you want to proceed?
-    </Modal.Description>
-    <div class="flex gap-3 justify-end">
-      <Modal.Close class="px-4 py-2 border rounded-lg">Cancel</Modal.Close>
-      <Modal.Close class="px-4 py-2 bg-blue-600 text-white rounded-lg">Confirm</Modal.Close>
+<Modal
+  bind:open
+  title="Confirm Action"
+  description="Are you sure you want to proceed?"
+  overlayClass="fixed inset-0 bg-black/50 flex items-center justify-center"
+  class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
+>
+  {#snippet footer()}
+    <div class="flex gap-3 justify-end mt-4">
+      <button onclick={() => open = false}>Cancel</button>
+      <button class="bg-blue-600 text-white px-4 py-2 rounded-lg">Confirm</button>
     </div>
-  </Modal.Content>
-</Modal.Root>
+  {/snippet}
+</Modal>
+
+<!-- 2️⃣ Inline trigger snippet — fully self-contained -->
+<Modal title="Confirm" overlayClass="..." class="...">
+  {#snippet trigger({ toggle })}
+    <button onclick={toggle}>Open Dialog</button>
+  {/snippet}
+  <p>Modal body content here</p>
+</Modal>
 ```
 
-**Props — `Modal.Root`**
+**Props — `Modal`**
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `defaultOpen` | `boolean` | `false` | Initial open state |
-| `open` | `boolean` | — | Controlled open state |
-| `onOpenChange` | `(open: boolean) => void` | — | Called when open state changes |
+| `open` | `boolean` (bindable) | `false` | Two-way bindable open state |
+| `title` | `string` | — | Dialog heading |
+| `description` | `string` | — | Short description |
+| `trigger` | `Snippet<[{ open, toggle }]>` | — | Inline trigger rendering |
+| `header` | `Snippet` | — | Replaces the default title/description header |
+| `footer` | `Snippet` | — | Rendered below body content |
+| `children` | `Snippet` | — | Dialog body |
 
 ---
 
@@ -156,49 +193,52 @@ Keyboard-navigable menu (`role="menu"`) with outside-click close. Navigate with 
 
 ```svelte
 <script lang="ts">
-  import { Dropdown } from '@sve-ui/dropdown';
+  import Dropdown, { DropdownItem } from '@sve-ui/dropdown';
 </script>
 
-<Dropdown.Root>
-  <Dropdown.Trigger class="px-4 py-2 border rounded-lg flex items-center gap-2">
-    Options ▼
-  </Dropdown.Trigger>
+<!-- 1️⃣ Data-driven — pass items array -->
+<Dropdown
+  items={[
+    { label: '✏️ Edit', onSelect: () => console.log('edit') },
+    { label: '🗑️ Delete', onSelect: () => console.log('delete') }
+  ]}
+  contentClass="absolute mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50"
+  itemClass="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+>
+  {#snippet trigger()}
+    <button class="px-4 py-2 border rounded-lg">Options ▼</button>
+  {/snippet}
+</Dropdown>
 
-  <Dropdown.Content class="absolute mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50">
-    <Dropdown.Item onSelect={() => console.log('edit')} class="px-4 py-2 hover:bg-gray-100">
-      ✏️ Edit
-    </Dropdown.Item>
-    <Dropdown.Item onSelect={() => console.log('delete')} class="px-4 py-2 hover:bg-red-50 text-red-600">
-      🗑️ Delete
-    </Dropdown.Item>
-  </Dropdown.Content>
-</Dropdown.Root>
+<!-- 2️⃣ DropdownItem children — full HTML control -->
+<Dropdown contentClass="absolute mt-2 w-48 bg-white border rounded-xl shadow-lg py-1 z-50">
+  {#snippet trigger()}
+    <button class="px-4 py-2 border rounded-lg">Options ▼</button>
+  {/snippet}
+  <DropdownItem onSelect={edit} class="px-4 py-2 hover:bg-gray-100">✏️ Edit</DropdownItem>
+  <DropdownItem onSelect={del} class="px-4 py-2 hover:bg-red-50 text-red-600">🗑️ Delete</DropdownItem>
+</Dropdown>
 ```
 
 ---
 
 ### Popover
 
-Floating content panel with placement support and click-outside close.
+One component. Put your trigger in `{#snippet trigger()}` and content in the default children slot.
 
 ```svelte
 <script lang="ts">
-  import { Popover } from '@sve-ui/popover';
+  import Popover from '@sve-ui/popover';
 </script>
 
-<Popover.Root placement="bottom-start">
-  <Popover.Trigger class="px-4 py-2 border rounded-lg">
-    More info ℹ️
-  </Popover.Trigger>
+<Popover placement="bottom-start" class="w-64 bg-white border rounded-xl shadow-xl p-4 z-50">
+  {#snippet trigger()}
+    <button class="px-4 py-2 border rounded-lg">More info ℹ️</button>
+  {/snippet}
 
-  <Popover.Content class="w-64 bg-white border rounded-xl shadow-xl p-4 z-50">
-    <div class="flex justify-between items-start mb-2">
-      <strong>Popover Title</strong>
-      <Popover.Close class="text-gray-400 hover:text-black">×</Popover.Close>
-    </div>
-    <p class="text-sm text-gray-600">Floating content with placement control.</p>
-  </Popover.Content>
-</Popover.Root>
+  <h3 class="font-bold mb-2">Popover Title</h3>
+  <p class="text-sm text-gray-600">Floating content. Closes on Escape or click outside.</p>
+</Popover>
 ```
 
 **Placement values:** `top | bottom | left | right | top-start | top-end | bottom-start | bottom-end`
@@ -211,80 +251,90 @@ Side panel overlay supporting `left`, `right`, `top`, and `bottom` positions. In
 
 ```svelte
 <script lang="ts">
-  import { Drawer } from '@sve-ui/drawer';
+  import Drawer from '@sve-ui/drawer';
+  let open = $state(false);
 </script>
 
-<Drawer.Root side="left">
-  <Drawer.Trigger class="px-4 py-2 bg-gray-800 text-white rounded-lg">
-    Open Drawer
-  </Drawer.Trigger>
+<!-- 1️⃣ bind:open — trigger lives outside -->
+<button onclick={() => open = true}>Open Drawer</button>
 
-  <Drawer.Content
-    overlayClass="fixed inset-0 bg-black/50 z-50"
-    class="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50 p-6"
-  >
-    <div class="flex justify-between items-center mb-6">
-      <Drawer.Title class="text-lg font-bold">Navigation</Drawer.Title>
-      <Drawer.Close class="text-gray-400 hover:text-black">×</Drawer.Close>
-    </div>
-    <nav><!-- Navigation items --></nav>
-  </Drawer.Content>
-</Drawer.Root>
+<Drawer
+  bind:open
+  side="left"
+  title="Navigation"
+  overlayClass="fixed inset-0 bg-black/50 z-50"
+  class="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50"
+>
+  <nav class="p-6"><!-- Navigation items --></nav>
+</Drawer>
+
+<!-- 2️⃣ Inline trigger snippet — self-contained -->
+<Drawer side="right" title="Settings" overlayClass="..." class="...">
+  {#snippet trigger({ toggle })}
+    <button onclick={toggle}>⚙ Settings</button>
+  {/snippet}
+  <p>Settings content here</p>
+</Drawer>
 ```
 
-**Props — `Drawer.Root`**
+**Props — `Drawer`**
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
+| `open` | `boolean` (bindable) | `false` | Two-way bindable open state |
 | `side` | `'left' \| 'right' \| 'top' \| 'bottom'` | `'left'` | Panel position |
-| `defaultOpen` | `boolean` | `false` | Initial open state |
+| `title` | `string` | — | Panel heading |
+| `trigger` | `Snippet<[{ toggle }]>` | — | Inline trigger rendering |
 
 ---
 
 ### Auto-Complete
 
-Combobox with filtered options, keyboard navigation (↑↓ Enter Escape), and ARIA combobox pattern.
+Single component. Pass `options`, use `bind:value` for the selected value. Optionally customize option rendering.
 
 ```svelte
 <script lang="ts">
-  import { AutoComplete, type AutoCompleteOption } from '@sve-ui/auto-complete';
+  import AutoComplete, { type AutoCompleteOption } from '@sve-ui/auto-complete';
 
   const options: AutoCompleteOption[] = [
     { value: 'svelte', label: 'Svelte' },
     { value: 'react', label: 'React' },
     { value: 'vue', label: 'Vue' },
   ];
+  let selected = $state<string | null>(null);
 </script>
 
-<AutoComplete.Root {options} onSelect={(v) => console.log('selected:', v)} class="relative">
-  <AutoComplete.Input
-    placeholder="Search frameworks..."
-    class="w-full px-4 py-2 border rounded-lg"
-  />
-  <AutoComplete.List class="absolute top-full mt-1 w-full bg-white border rounded-xl shadow-lg z-50">
-    {#each options as option, i}
-      <AutoComplete.Item
-        {option}
-        index={i}
-        class="px-4 py-2 hover:bg-gray-100 cursor-pointer data-[active]:bg-blue-600 data-[active]:text-white"
-      />
-    {/each}
-  </AutoComplete.List>
-</AutoComplete.Root>
-```
+<!-- 1️⃣ Default rendering -->
+<AutoComplete
+  {options}
+  bind:value={selected}
+  placeholder="Search frameworks..."
+  class="relative"
+  inputClass="w-full px-4 py-2 border rounded-lg"
+  listClass="absolute top-full mt-1 w-full bg-white border rounded-xl shadow-lg z-50"
+  optionClass="px-4 py-2 hover:bg-gray-100 cursor-pointer data-[active]:bg-blue-600 data-[active]:text-white"
+/>
 
-**Custom item rendering with Snippets:**
-
-```svelte
-<AutoComplete.Item {option} index={i}>
-  {#snippet children({ option: opt, active, selected })}
-    <span class:text-blue-600={selected}>
+<!-- 2️⃣ Custom option rendering with snippets -->
+<AutoComplete {options} bind:value={selected}>
+  {#snippet option(opt, isActive, isSelected)}
+    <div class="px-4 py-2" class:bg-blue-600={isActive} class:text-white={isActive}>
       {opt.label}
-      {#if selected}✓{/if}
-    </span>
+      {#if isSelected}<span class="ml-auto">✓</span>{/if}
+    </div>
   {/snippet}
-</AutoComplete.Item>
+</AutoComplete>
 ```
+
+**Props — `AutoComplete`**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `options` | `AutoCompleteOption[]` | — | Array of `{ value, label, disabled? }` |
+| `value` | `T \| null` (bindable) | `null` | Two-way bindable selected value |
+| `placeholder` | `string` | — | Input placeholder |
+| `filterFn` | `(option, query) => boolean` | label contains | Custom filter |
+| `option` | `Snippet<[opt, isActive, isSelected]>` | — | Custom option rendering |
 
 ---
 

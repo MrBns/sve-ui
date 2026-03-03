@@ -139,8 +139,8 @@
     <div class="space-y-4">
       {#each [
         { label: 'Install a package', code: 'bun add @sve-ui/accordion' },
-        { label: 'Import components', code: "import { Accordion } from '@sve-ui/accordion';" },
-        { label: 'Use in your template', code: '<Accordion.Root>\n  <Accordion.Item value="item-1">\n    <Accordion.Trigger>Title</Accordion.Trigger>\n    <Accordion.Content>Content</Accordion.Content>\n  </Accordion.Item>\n</Accordion.Root>' }
+        { label: 'Import components', code: "import Accordion from '@sve-ui/accordion';" },
+        { label: 'Use in your template', code: '<!-- Simplest: data-driven -->\n<Accordion\n  type="single"\n  items={[\n    { value: \'q1\', title: \'Question\', content: \'Answer\' }\n  ]}\n/>\n\n<!-- Custom rendering with snippets -->\n<Accordion type="single" {items}>\n  {#snippet trigger(item, isOpen)}\n    <span class:open={isOpen}>{item.title}</span>\n  {/snippet}\n</Accordion>' }
       ] as step, i}
         <div class="bg-slate-800/60 border border-slate-700 rounded-xl overflow-hidden">
           <div class="flex items-center gap-3 px-4 py-2 border-b border-slate-700 bg-slate-900/50">

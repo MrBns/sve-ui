@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AutoComplete } from '@sve-ui/auto-complete';
+  import AutoComplete from '@sve-ui/auto-complete';
   import type { AutoCompleteOption } from '@sve-ui/auto-complete';
 
   const frameworks: AutoCompleteOption[] = [
@@ -26,8 +26,9 @@
     { value: 'br', label: 'Brazil' }
   ];
 
-  let selectedFramework = $state('');
-  let selectedCountry = $state('');
+  // bind:value holds the selected value
+  let selectedFramework = $state<string | null>(null);
+  let selectedCountry = $state<string | null>(null);
 </script>
 
 <svelte:head>
@@ -38,66 +39,54 @@
   <div class="mb-10">
     <a href="/" class="text-sm text-slate-400 hover:text-white transition-colors">← Back</a>
     <h1 class="text-4xl font-bold text-white mt-4 mb-2">AutoComplete</h1>
-    <p class="text-slate-400">Combobox with filtered options, keyboard navigation (↑↓ Enter Escape), and ARIA.</p>
+    <p class="text-slate-400">Single component. Pass <code class="text-indigo-300">options</code>, use <code class="text-indigo-300">bind:value</code>. Optional custom rendering via <code class="text-indigo-300">{'{#snippet option}'}</code>.</p>
   </div>
 
   <section class="mb-12 grid md:grid-cols-2 gap-8">
-    <!-- Framework Search -->
+    <!-- Default rendering -->
     <div>
-      <label class="block text-sm font-medium text-slate-300 mb-2">Search Framework</label>
-      {#if selectedFramework}
-        <p class="mb-2 text-xs text-indigo-300 font-mono">Selected: {selectedFramework}</p>
-      {/if}
-      <AutoComplete.Root
+      <label class="block text-sm font-medium text-slate-300 mb-2">
+        Framework
+        {#if selectedFramework}
+          <span class="text-indigo-300 font-mono ml-2">= {selectedFramework}</span>
+        {/if}
+      </label>
+      <AutoComplete
         options={frameworks}
-        onSelect={(v) => selectedFramework = v}
+        bind:value={selectedFramework}
+        placeholder="Type to search..."
         class="relative"
-      >
-        <AutoComplete.Input
-          placeholder="Type to search..."
-          class="w-full px-4 py-2.5 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-        />
-        <AutoComplete.List class="absolute top-full mt-1 w-full bg-slate-800 border border-slate-600 rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-48 overflow-y-auto">
-          {#each frameworks as option, i}
-            <AutoComplete.Item
-              {option}
-              index={i}
-              class="px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 hover:text-white cursor-pointer transition-colors data-[active]:bg-indigo-600 data-[active]:text-white data-[selected]:text-indigo-300"
-            />
-          {/each}
-        </AutoComplete.List>
-      </AutoComplete.Root>
+        inputClass="w-full px-4 py-2.5 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+        listClass="absolute top-full mt-1 w-full bg-slate-800 border border-slate-600 rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-48 overflow-y-auto"
+        optionClass="px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 cursor-pointer transition-colors data-[active]:bg-indigo-600 data-[active]:text-white"
+      />
     </div>
 
-    <!-- Country Search -->
+    <!-- Custom option snippet -->
     <div>
-      <label class="block text-sm font-medium text-slate-300 mb-2">Search Country</label>
-      {#if selectedCountry}
-        <p class="mb-2 text-xs text-emerald-300 font-mono">Selected: {selectedCountry}</p>
-      {/if}
-      <AutoComplete.Root
+      <label class="block text-sm font-medium text-slate-300 mb-2">
+        Country
+        {#if selectedCountry}
+          <span class="text-emerald-300 font-mono ml-2">= {selectedCountry}</span>
+        {/if}
+      </label>
+      <AutoComplete
         options={countries}
-        onSelect={(v) => selectedCountry = v}
+        bind:value={selectedCountry}
+        placeholder="Search country..."
         class="relative"
+        inputClass="w-full px-4 py-2.5 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+        listClass="absolute top-full mt-1 w-full bg-slate-800 border border-slate-600 rounded-xl shadow-xl z-50 overflow-hidden py-1"
       >
-        <AutoComplete.Input
-          placeholder="Search country..."
-          class="w-full px-4 py-2.5 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-        />
-        <AutoComplete.List class="absolute top-full mt-1 w-full bg-slate-800 border border-slate-600 rounded-xl shadow-xl z-50 overflow-hidden py-1">
-          {#each countries as option, i}
-            <AutoComplete.Item
-              {option}
-              index={i}
-              class="px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 cursor-pointer transition-colors data-[active]:bg-emerald-600 data-[active]:text-white"
-            >
-              {#snippet children({ option: opt })}
-                <span>🌍 {opt.label}</span>
-              {/snippet}
-            </AutoComplete.Item>
-          {/each}
-        </AutoComplete.List>
-      </AutoComplete.Root>
+        {#snippet option(opt, isActive, isSelected)}
+          <div class="px-4 py-2.5 flex items-center gap-2 cursor-pointer transition-colors
+            {isActive ? 'bg-emerald-600 text-white' : 'text-slate-200 hover:bg-slate-700'}">
+            <span>🌍</span>
+            <span>{opt.label}</span>
+            {#if isSelected}<span class="ml-auto text-xs">✓</span>{/if}
+          </div>
+        {/snippet}
+      </AutoComplete>
     </div>
   </section>
 
@@ -105,21 +94,25 @@
   <section>
     <h2 class="text-lg font-semibold text-slate-300 mb-3">Usage</h2>
     <pre class="bg-slate-900 border border-slate-700 rounded-xl p-5 text-sm text-green-300 font-mono overflow-x-auto">{`<script lang="ts">
-  import { AutoComplete } from '@sve-ui/auto-complete';
+  import AutoComplete from '@sve-ui/auto-complete';
 
   const options = [
     { value: 'svelte', label: 'Svelte' },
     { value: 'react', label: 'React' },
   ];
+  let selected = $state(null);
 <\/script>
 
-<AutoComplete.Root {options} onSelect={(v) => console.log(v)}>
-  <AutoComplete.Input placeholder="Search..." />
-  <AutoComplete.List>
-    {#each options as option, i}
-      <AutoComplete.Item {option} index={i} />
-    {/each}
-  </AutoComplete.List>
-</AutoComplete.Root>`}</pre>
+<!-- 1️⃣ Default rendering -->
+<AutoComplete {options} bind:value={selected} placeholder="Search..." />
+
+<!-- 2️⃣ Custom option snippet -->
+<AutoComplete {options} bind:value={selected}>
+  {#snippet option(opt, isActive, isSelected)}
+    <div class:active={isActive}>
+      {opt.label} {#if isSelected}✓{/if}
+    </div>
+  {/snippet}
+</AutoComplete>`}</pre>
   </section>
 </div>
